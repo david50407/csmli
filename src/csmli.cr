@@ -1,5 +1,11 @@
+module Csmli; end
+
+require "./csmli/exception"
 require "./csmli/*"
 
-module Csmli
-  # TODO Put your code here
+if argv = ARGV.shift?
+  Csmli::Compiler.run File.open argv
+else
+  Csmli::Compiler.run STDIN
 end
+
