@@ -95,6 +95,8 @@ class Csmli::Parser
       node = Boolean.new false
     when :number
       node = Number.new token.number_value
+    when :ident
+      node = Variable.new token.value
     when :"("
       case next_token.type
       when :+, :*, :"=", :and, :or
@@ -142,20 +144,13 @@ class Csmli::Parser
       end
       check(:")")
     else
-      node = parse_variable
+      raise "Unexpected token `#{token.type}`"
     end
 
     node.at Location.new(line_number, column_number)
     node.at_end Location.new(token.line_number, token.column_number)
     next_token
 
-    node
-  end
-
-  def parse_variable
-    check(:ident)
-    node = Variable.new token.value
-    next_token
     node
   end
 
