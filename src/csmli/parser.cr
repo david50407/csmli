@@ -164,7 +164,6 @@ class Csmli::Parser
     check(:")") && next_token
     while exp_start_token?
       node.exps << parse_expression
-      next_token
     end
     node
   end

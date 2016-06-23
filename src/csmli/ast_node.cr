@@ -1,7 +1,7 @@
 module Csmli
   abstract class ASTNode
-    property location : Location?
-    property end_location : Location?
+    property! location : Location?
+    property! end_location : Location?
 
     def at(@location : Location?)
       self
@@ -54,8 +54,8 @@ module Csmli
     end
 
     delegate empty?, to: @statements
-    delegate :[], to: @statements
     delegate last, to: @statements
+    delegate each, to: @statements
 
     def end_location
       @end_location || last.try &.end_location
@@ -70,7 +70,7 @@ module Csmli
 
   class Define < ASTNode
     property variable_name : String
-    property exp : Expression?
+    property! exp : Expression?
 
     def initialize(@variable_name : String)
     end
@@ -86,7 +86,7 @@ module Csmli
 
   class Print < ASTNode
     property type : Symbol
-    property exp : Expression?
+    property! exp : Expression?
 
     def initialize(@type : Symbol)
     end
@@ -100,7 +100,7 @@ module Csmli
     def_equals_and_hash type, exp
   end
 
-  class Expression < ASTNode
+  abstract class Expression < ASTNode
   end
 
   class Number < Expression
@@ -178,9 +178,9 @@ module Csmli
   end
 
   class If < Expression
-    property test_exp : Expression?
-    property then_exp : Expression?
-    property else_exp : Expression?
+    property! test_exp : Expression?
+    property! then_exp : Expression?
+    property! else_exp : Expression?
 
     def clone_without_location
       clone = If.new

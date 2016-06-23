@@ -14,8 +14,8 @@ class Csmli::Lexer
     @buffer = [] of Char
     @last_buffer = [] of Char
     @skip = false
-    @current_char = @io.read_char || '\0'
     @string_pool = string_pool || StringPool.new
+    @current_char = @io.read_char || '\0'
   end
 
   def next_token
