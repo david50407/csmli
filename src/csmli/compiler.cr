@@ -1,3 +1,4 @@
+require "colorize"
 require "./parser"
 
 module Csmli
@@ -12,6 +13,8 @@ module Csmli
 
     def run
       @parser.parse
+    rescue e : ParseException
+      STDERR << "Parsing error: ".colorize.bold.red << e.message << "\n"
     end
   end
 end

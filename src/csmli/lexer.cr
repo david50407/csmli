@@ -1,22 +1,25 @@
 require "string_pool"
 
 class Csmli::Lexer
+  @string_pool : StringPool
 
   getter token : Token
   property skip : Bool
   private getter current_char
 
-  def initialize(@io : IO)
+  def initialize(@io : IO, string_pool : StringPool? = nil)
     @token = Token.new
     @line_number = 1
     @column_number = 1
     @buffer = [] of Char
+    @last_buffer = [] of Char
     @skip = false
     @current_char = @io.read_char || '\0'
-    @string_pool = StringPool.new
+    @string_pool = string_pool || StringPool.new
   end
 
   def next_token
+    start_buffer
     skip_whitespace
 
     @token.line_number = @line_number
@@ -30,22 +33,22 @@ class Csmli::Lexer
     when ')'
       next_char :")"
     when '+'
-      next_char :"+"
+      next_char :+
     when '-'
       case next_char
       when '1'..'9'
         consume_number negative: true
       else
-        @token.type = :"-"
+        @token.type = :-
       end
     when '*'
-      next_char :"*"
+      next_char :*
     when '/'
-      next_char :"/"
+      next_char :/
     when '>'
-      next_char :">"
+      next_char :>
     when '<'
-      next_char :"<"
+      next_char :<
     when '='
       next_char :"="
     when '#'
@@ -83,13 +86,6 @@ class Csmli::Lexer
       else
         consume_ident
       end
-    when 'o'
-      if buffered_next_char == 'r'
-        commit_buffer
-        next_char :or
-      else
-        consume_ident
-      end
     when 'm'
       if buffered_next_char == 'o' && buffered_next_char == 'd'
         commit_buffer
@@ -101,6 +97,29 @@ class Csmli::Lexer
       if buffered_next_char == 'o' && buffered_next_char == 't'
         commit_buffer
         next_char :not
+      else
+        consume_ident
+      end
+    when 'o'
+      if buffered_next_char == 'r'
+        commit_buffer
+        next_char :or
+      else
+        consume_ident
+      end
+    when 'p'
+      if buffered_next_char == 'r' && buffered_next_char == 'i' && buffered_next_char == 'n' &&
+          buffered_next_char == 't' && buffered_next_char == '-'
+        type = {buffered_next_char, buffered_next_char, buffered_next_char}
+        if type == {'n', 'u', 'm'}
+          commit_buffer
+          next_char :"print-num"
+        elsif type == {'b', 'o', 'o'} && buffered_next_char == 'l'
+          commit_buffer
+          next_char :"print-bool"
+        else
+          consume_ident
+        end
       else
         consume_ident
       end
@@ -175,6 +194,11 @@ class Csmli::Lexer
     end
   end
 
+  private def start_buffer
+    @last_buffer = @buffer + @last_buffer
+    @buffer.clear
+  end
+
   private def buffered_next_char
     if char = @io.read_char
       @buffer << char
@@ -184,9 +208,13 @@ class Csmli::Lexer
     end
   end
 
+  private def read_next_char
+    @last_buffer.shift? || @io.read_char || '\0'
+  end
+
   private def next_char
     @column_number += 1
-    @current_char = @buffer.shift? || @io.read_char || '\0'
+    @current_char = @buffer.shift? || read_next_char
   end
 
   private def next_char(token_type)

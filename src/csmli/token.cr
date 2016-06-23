@@ -1,4 +1,4 @@
-class Csmli::Token
+struct Csmli::Token
   property type : Symbol
   property number_value : Int32
   property value : String
