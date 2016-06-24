@@ -1,7 +1,7 @@
 module Csmli
   abstract class ASTNode
     property! location : Location?
-    property! end_location : Location?
+    property end_location : Location?
 
     def at(@location : Location?)
       self
@@ -15,6 +15,7 @@ module Csmli
       clone = clone_without_location
       clone.location = location
       clone.end_location = end_location
+      clone
     end
 
     def nop?
@@ -162,6 +163,7 @@ module Csmli
   class Function < Expression
     property args : Array(String)
     property exps : Array(Expression)
+    property! closure : Array(Hash(String, Bool | Int32 | Function))?
 
     def initialize
       @args = [] of String
@@ -172,6 +174,7 @@ module Csmli
       clone = Function.new
       clone.args = args
       clone.exps = exps
+      clone
     end
 
     def_equals_and_hash args, exps

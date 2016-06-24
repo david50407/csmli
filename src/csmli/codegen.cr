@@ -1,10 +1,8 @@
 class Csmli::Codegen
-  @variables : Hash(String, Int32 | Bool | Function)
   @stack : Array(Hash(String, Int32 | Bool | Function))
 
   def initialize
-    @variables = {} of String => Int32 | Bool | Function
-    @stack = [] of Hash(String, Int32 | Bool | Function)
+    @stack = [ {} of String => Int32 | Bool | Function ]
   end
 
   def generate(ast : ASTNode)
@@ -15,9 +13,11 @@ class Csmli::Codegen
   end
 
   def visit(node : Statements)
+    rtn = nil
     node.each do |n|
-      visit n
+      rtn = visit n
     end
+    rtn
   end
 
   def visit(node : Define)
@@ -26,7 +26,7 @@ class Csmli::Codegen
 
     value = visit(exp)
     raise_type(exp) if value.nil?
-    @variables[name] = value
+    store_variable(name, value)
     nil
   end
 
@@ -53,8 +53,7 @@ class Csmli::Codegen
   end
 
   def visit(node : Variable) : Int32 | Bool | Function
-    raise "Undefined variable: `#{node.name}`", node if @variables[node.name]?.nil?
-    @variables[node.name]
+    fetch_variable(node.name, node)
   end
 
   def visit(node : Operation) : Int32 | Bool
@@ -141,10 +140,69 @@ class Csmli::Codegen
   end
 
   def visit(node : Function) : Function
-    node
+    clone = node.clone
+    clone.closure = snapshot_stack
+    clone
   end
 
   def visit(node : Call) : Bool | Int32 | Function | Nil
+    if func_name = node.func.as? String
+      func = fetch_variable func_name, node
+      raise "`#{node.func}` is not a function", node unless func.is_a? Function
+    else
+      func = node.func
+    end
+    func = func.as Function
+
+    raise "Wrong number of arguments `#{node.params.size}`, expecting `#{func.args.size}`" unless node.params.size == func.args.size
+    args = {} of String => Bool | Int32 | Function
+    node.params.size.times do |i|
+      v = visit(node.params[i])
+      raise "Argument `#{func.args[i]}` should not be null", node if v.nil?
+      args[func.args[i]] = v.not_nil!
+    end
+
+    level = apply_snapshot func.closure
+    create_stack_layer
+    # apply arguments
+    args.each do |k, v|
+      store_variable(k, v)
+    end
+    rtn = visit(Statements.from func.exps.map { |e| e.as ASTNode } )
+    (level + 1).times { @stack.pop }
+
+    rtn
+  end
+
+  private def create_stack_layer
+    @stack << {} of String => Bool | Int32 | Function
+  end
+
+  private def snapshot_stack
+    @stack.dup
+  end
+
+  private def apply_snapshot(snapshot)
+    return 0 if snapshot.nil?
+    top = {@stack.size, snapshot.size}.min
+    i = 0
+    while i < top && @stack[i].object_id == snapshot[i].object_id
+      i += 1
+    end
+    # applying
+    @stack.concat snapshot[i..-1] if i < snapshot.size
+    snapshot.size - i
+  end
+
+  private def store_variable(name : String, value : Bool | Int32 | Function)
+    @stack.last[name] = value
+  end
+
+  private def fetch_variable(name : String, node)
+    @stack.reverse_each do |vars|
+      return vars[name] if vars.has_key? name
+    end
+    raise "Undefined variable: `#{name}`", node
   end
 
   private def raise_type(node, expected_type : Symbol? = nil)
