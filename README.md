@@ -1,26 +1,30 @@
 # csmli
 
-TODO: Write a description here
+Mini-Lisp interpreter
 
-## Installation
+__No unit tests yet__
 
+## Compile
 
-TODO: Write installation instructions here
-
+```bash
+$ crystal compile --release src/csmli.cr
+```
 
 ## Usage
 
+Append lisp program filename as argument or leave blank for input from standard input.
 
+```bash
+$ ./csmli [program.lsp]
+```
 
-TODO: Write usage instructions here
+## Specification
 
-## Development
-
-TODO: Write development instructions here
+See `/rules` folder
 
 ## Contributing
 
-1. Fork it ( https://github.com/[your-github-name]/csmli/fork )
+1. Fork it ( https://github.com/david50407/csmli/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
@@ -28,4 +32,4 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [[your-github-name]](https://github.com/[your-github-name]) David Kuo - creator, maintainer
+- [[david50407]](https://github.com/david50407) David Kuo - creator, maintainer
