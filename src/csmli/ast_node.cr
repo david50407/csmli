@@ -162,22 +162,24 @@ module Csmli
 
   class Function < Expression
     property args : Array(String)
-    property exps : Array(Expression)
+    property defs : Array(Define)
+    property! exp : Expression?
     property! closure : Array(Hash(String, Bool | Int32 | Function))?
 
     def initialize
       @args = [] of String
-      @exps = [] of Expression
+      @defs = [] of Define
     end
 
     def clone_without_location
       clone = Function.new
       clone.args = args
-      clone.exps = exps
+      clone.defs = defs
+      clone.exp = exp
       clone
     end
 
-    def_equals_and_hash args, exps
+    def_equals_and_hash args, defs, exp
   end
 
   class If < Expression

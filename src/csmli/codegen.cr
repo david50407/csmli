@@ -168,7 +168,8 @@ class Csmli::Codegen
     args.each do |k, v|
       store_variable(k, v)
     end
-    rtn = visit(Statements.from func.exps.map { |e| e.as ASTNode } )
+    func.defs.each { |d| visit d }
+    rtn = visit(func.exp)
     (level + 1).times { @stack.pop }
 
     rtn

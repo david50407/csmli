@@ -162,9 +162,11 @@ class Csmli::Parser
       next_token
     end
     check(:")") && next_token
-    while exp_start_token?
-      node.exps << parse_expression
+    while token.type == :"(" && buffered_next_token.type == :define
+      node.defs << parse_define
     end
+    node.exp = parse_expression
+
     node
   end
 
